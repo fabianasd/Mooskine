@@ -9,7 +9,7 @@
 import UIKit
 import CoreData
 
-class NotebooksListViewController: UIViewController, UITableViewDataSource {
+class NotebooksListViewController: UIViewController, UITableViewDataSource, NSFetchedResultsControllerDelegate {
     /// A table view that displays a list of notebooks
     @IBOutlet weak var tableView: UITableView!
     
@@ -18,10 +18,31 @@ class NotebooksListViewController: UIViewController, UITableViewDataSource {
     
     var dataController:DataController!
     
+    var fetchResultsController:NSFetchedResultsController<Notebook>! //opcional desencapsulado
+    
+    fileprivate func setupFetchedResultsController() {
+        //criar um fetchRequest lembrando de incluir sortDescriptors
+        let fetchRequest:NSFetchRequest<Notebook> = Notebook.fetchRequest()
+        let sortDescriptor = NSSortDescriptor(key: "creationDate", ascending: false)
+        fetchRequest.sortDescriptors = [sortDescriptor]
+        
+        // instanciar o fetchedResultsController
+        fetchResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: dataController.viewContext, sectionNameKeyPath: nil, cacheName: nil)
+        //conformidade do protocolo NSFetchedResultsControllerDelegate
+        fetchResultsController.delegate = self
+        do {
+            try fetchResultsController.performFetch()
+        } catch {
+            fatalError("The fetch could not be performed: \(error.localizedDescription)")
+        }
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         navigationItem.titleView = UIImageView(image: #imageLiteral(resourceName: "toolbar-cow"))
         navigationItem.rightBarButtonItem = editButtonItem
+        
+        setupFetchedResultsController()
         reloadNotebooks()
     }
     
@@ -32,6 +53,11 @@ class NotebooksListViewController: UIViewController, UITableViewDataSource {
             tableView.deselectRow(at: indexPath, animated: false)
             tableView.reloadRows(at: [indexPath], with: .fade)
         }
+    }
+    
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        fetchResultsController = nil
     }
     
     // -------------------------------------------------------------------------
