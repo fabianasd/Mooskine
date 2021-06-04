@@ -16,9 +16,12 @@ class NotesListViewController: UIViewController, UITableViewDataSource {
     /// The notebook whose notes are being displayed
     var notebook: Notebook!
     
-    var notes:[Note] = []
+    //var notes:[Note] = []
     
     var dataController:DataController! //injetar o DataController
+    
+    var fetchedResultsController:NSFetchedResultsController<Note>! //opcional desencapsulado
+    
     
     /// A date formatter for date text in note cells
     let dateFormatter: DateFormatter = {
@@ -27,11 +30,7 @@ class NotesListViewController: UIViewController, UITableViewDataSource {
         return df
     }()
     
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        
-        navigationItem.title = notebook.name
-        navigationItem.rightBarButtonItem = editButtonItem
+    fileprivate func setupFetchedResultsController() {
         //pegar somente as notes do notebook selecionado
         let fetchRequest:NSFetchRequest<Note> = Note.fetchRequest()
         let predicate = NSPredicate(format: "notebook == %@", notebook) //O "%@" sera substituido pelo notebook atual
@@ -39,12 +38,29 @@ class NotesListViewController: UIViewController, UITableViewDataSource {
         let sortDescriptor = NSSortDescriptor(key: "creationDate", ascending: false) //organiza por data de criacao ascendente
         fetchRequest.sortDescriptors = [sortDescriptor] // array
         // pedimos aos contatos de ManagedObject para realizar a busca
-        if let result = try? dataController.viewContext.fetch(fetchRequest) {
-            // se der certo armazenamos as notacoes no array de anotacoes da classe
-            notes = result
-      //      tableView.reloadData()
+        //        if let result = try? dataController.viewContext.fetch(fetchRequest) {
+        //            // se der certo armazenamos as notacoes no array de anotacoes da classe
+        //            notes = result
+        //            //      tableView.reloadData()
+        //        }
+        // instanciar o fetchedResultsController
+        fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: dataController.viewContext, sectionNameKeyPath: nil, cacheName: "notes") //cacheName: como "nulo": significa que o fetchedResultsController nao vai usar cache. Com nome definido: usa cache entre as sessoes.
+        //conformidade do protocolo NSFetchedResultsControllerDelegate
+        fetchedResultsController.delegate = self
+        do {
+            try fetchedResultsController.performFetch()
+        } catch {
+            fatalError("The fetch could not be performed: \(error.localizedDescription)")
         }
-
+    }
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        
+        navigationItem.title = notebook.name
+        navigationItem.rightBarButtonItem = editButtonItem
+        //  setupFetchedResultsController()
+        
         updateEditButtonState()
     }
     
@@ -75,28 +91,30 @@ class NotesListViewController: UIViewController, UITableViewDataSource {
         note.creationDate = Date() // data de criacao
         note.notebook = notebook // configura o notebook
         try? dataController.viewContext.save() //salvar no contexto
-        notes.insert(note, at: 0) //adicionamos a frente do array de anotacoes desta classe
+        //        notes.insert(note, at: 0) //adicionamos a frente do array de anotacoes desta classe
         //tableView.insertRows(at: [IndexPath(row: 0, section: 0)], with: .fade) //aparece no final da tabela
-        tableView.insertRows(at: [IndexPath(row: 0, section: 0)], with: .fade) //aparece no topo da tabela
-        updateEditButtonState()
+        //        tableView.insertRows(at: [IndexPath(row: 0, section: 0)], with: .fade) //aparece no topo da tabela
+        //        updateEditButtonState()
     }
     
     // Deletes the `Note` at the specified index path
     func deleteNote(at indexPath: IndexPath) {
         //persisntecia = ao reiniciar o item permanece deletado
-        let noteToDelete = note(at: indexPath) // referencia da anotacao a ser deletada
+        let noteToDelete = fetchedResultsController.object(at: indexPath) // referencia da anotacao a ser deletada
         dataController.viewContext.delete(noteToDelete) //deleta do contexto
         try? dataController.viewContext.save() //salva a alteracao
-        notes.remove(at: indexPath.row) //remove do array de anotacoes
-        tableView.deleteRows(at: [indexPath], with: .fade)
-        if numberOfNotes == 0 {
-            setEditing(false, animated: true)
-        }
-        updateEditButtonState()
+        //        notes.remove(at: indexPath.row) //remove do array de anotacoes
+        //        tableView.deleteRows(at: [indexPath], with: .fade)
+        //        if numberOfNotes == 0 {
+        //            setEditing(false, animated: true)
+        //        }
+        //        updateEditButtonState()
     }
     
     func updateEditButtonState() {
-        navigationItem.rightBarButtonItem?.isEnabled = numberOfNotes > 0
+        if let sections = fetchedResultsController.sections {
+            navigationItem.rightBarButtonItem?.isEnabled = sections[0].numberOfObjects > 0
+        }
     }
     
     override func setEditing(_ editing: Bool, animated: Bool) {
@@ -108,15 +126,15 @@ class NotesListViewController: UIViewController, UITableViewDataSource {
     // MARK: - Table view data source
     
     func numberOfSections(in tableView: UITableView) -> Int {
-        return 1
+        return fetchedResultsController.sections?.count ?? 1
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return numberOfNotes
+        return fetchedResultsController.sections?[section].numberOfObjects ?? 0
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let aNote = note(at: indexPath)
+        let aNote = fetchedResultsController.object(at: indexPath)
         let cell = tableView.dequeueReusableCell(withIdentifier: NoteCell.defaultReuseIdentifier, for: indexPath) as! NoteCell
         
         // Configure cell
@@ -135,23 +153,22 @@ class NotesListViewController: UIViewController, UITableViewDataSource {
         }
     }
     
-    // Helpers
-    
-    var numberOfNotes: Int { return notes.count }
-    
-    func note(at indexPath: IndexPath) -> Note {
-        return notes[indexPath.row]
-    }
+    //    // Helpers
+    //
+    //    var numberOfNotes: Int { return notes.count }
+    //
+    //    func note(at indexPath: IndexPath) -> Note {
+    //        return notes[indexPath.row]
+    //    }
     
     // -------------------------------------------------------------------------
     // MARK: - Navigation
-    
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         // If this is a NoteDetailsViewController, we'll configure its `Note`
         // and its delete action
         if let vc = segue.destination as? NoteDetailsViewController {
             if let indexPath = tableView.indexPathForSelectedRow {
-                vc.note = note(at: indexPath)
+                vc.note = fetchedResultsController.object(at: indexPath)
                 
                 vc.onDelete = { [weak self] in
                     if let indexPath = self?.tableView.indexPathForSelectedRow {
@@ -160,6 +177,32 @@ class NotesListViewController: UIViewController, UITableViewDataSource {
                     }
                 }
             }
+        }
+    }
+}
+
+extension NotesListViewController:NSFetchedResultsControllerDelegate {
+    //inicio e...
+    func controllerWillChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
+        tableView.beginUpdates()
+    }
+    //fim das atualizações
+    
+    func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
+        tableView.endUpdates()
+    }
+    
+    func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange sectionInfo: NSFetchedResultsSectionInfo, atSectionIndex sectionIndex: Int, for type: NSFetchedResultsChangeType) {
+        let indexSet = IndexSet(integer: sectionIndex)
+        switch type {
+        case .insert:
+            tableView.insertSections(indexSet, with: .fade)
+            break
+        case .delete:
+            tableView.deleteSections(indexSet, with: .fade)
+            break
+        case .update, .move:
+            fatalError("Invalid change type in controller(_:didChange:atSectionIndex:for:). Only .insert ou .delete should be possible.")
         }
     }
 }

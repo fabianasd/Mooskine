@@ -24,7 +24,7 @@ class NotebooksListViewController: UIViewController, UITableViewDataSource {
         fetchRequest.sortDescriptors = [sortDescriptor]
         
         // instanciar o fetchedResultsController
-        fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: dataController.viewContext, sectionNameKeyPath: nil, cacheName: nil)
+        fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: dataController.viewContext, sectionNameKeyPath: nil, cacheName: "notebooks") //cacheName: como "nulo": significa que o fetchedResultsController nao vai usar cache. Com nome definido: usa cache entre as sessoes.
         //conformidade do protocolo NSFetchedResultsControllerDelegate
         fetchedResultsController.delegate = self
         do {
@@ -170,23 +170,27 @@ class NotebooksListViewController: UIViewController, UITableViewDataSource {
 }
 
 extension NotebooksListViewController:NSFetchedResultsControllerDelegate {
-    
+    //inicio e...
     func controllerWillChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
         tableView.beginUpdates()
     }
+    //fim das atualizações
     
     func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
         tableView.endUpdates()
     }
     
-    func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange anObject: Any, at indexPath: IndexPath?, for type: NSFetchedResultsChangeType, newIndexPath: IndexPath?) {
+    func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange sectionInfo: NSFetchedResultsSectionInfo, atSectionIndex sectionIndex: Int, for type: NSFetchedResultsChangeType) {
+        let indexSet = IndexSet(integer: sectionIndex)
         switch type {
         case .insert:
-            tableView.insertRows(at: [newIndexPath!], with: .fade)
-        case .delete:
-            tableView.deleteRows(at: [indexPath!], with: .fade)
-        default:
+            tableView.insertSections(indexSet, with: .fade)
             break
+        case .delete:
+            tableView.deleteSections(indexSet, with: .fade)
+            break
+        case .update, .move:
+            fatalError("Invalid change type in controller(_:didChange:atSectionIndex:for:). Only .insert ou .delete should be possible.")
         }
     }
 }
