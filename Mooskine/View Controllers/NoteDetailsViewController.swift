@@ -15,6 +15,8 @@ class NoteDetailsViewController: UIViewController {
     /// The note being displayed and edited
     var note: Note!
     
+    var dataController:DataController!
+    
     /// A closure that is run when the user asks to delete the current note
     var onDelete: (() -> Void)?
     
@@ -76,10 +78,18 @@ extension NoteDetailsViewController {
     /// `toolbarItems' property, and to configure an accessory view for the
     /// text view's keyboard that also displays these items.
     func makeToolbarItems() -> [UIBarButtonItem] {
-        let trash = UIBarButtonItem(barButtonSystemItem: .trash, target: self, action: #selector(deleteTapped(sender:)))
-        let space = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
+        let trash = UIBarButtonItem(barButtonSystemItem: .trash,
+                                    target: self, action: #selector(deleteTapped(sender:)))
+        let space = UIBarButtonItem(barButtonSystemItem: .flexibleSpace,
+                                    target: nil, action: nil)
+        let bold = UIBarButtonItem(image: #imageLiteral(resourceName: "toolbar-bold"), style: .plain, target: self,
+                                    action: #selector(boldTapped(sender:)))
+        let red = UIBarButtonItem(image: #imageLiteral(resourceName: "toolbar-underline"), style: .plain, target: self,
+                                    action: #selector(redTapped(sender:)))
+        let cow = UIBarButtonItem(image: #imageLiteral(resourceName: "toolbar-cow"), style: .plain, target: self,
+                                    action: #selector(cowTapped(sender:)))//permite passar uma imagem (imagem literal)
         
-        return [trash, space]
+        return [trash, space, bold, space, red, space, cow, space]
     }
     
     /// Configure the current toolbar
@@ -99,7 +109,18 @@ extension NoteDetailsViewController {
     }
     
     @IBAction func deleteTapped(sender: Any) {
-        showDeleteAlert()
+    }
+    
+    @IBAction func boldTapped(sender: Any) {
+        
+    }
+    
+    @IBAction func redTapped(sender: Any) {
+    
+    }
+    
+    @IBAction func cowTapped(sender: Any) {
+ 
     }
     
     // MARK: Helper methods for actions
