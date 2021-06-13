@@ -16,8 +16,9 @@ class DataController {
     var viewContext:NSManagedObjectContext { //propriedade de convenienca para acessar o contexto.
         return persistentContainer.viewContext //O container (DataController: cria uma fila principal chamada viewContext. Ele tambem fornece duas formas de  criar contextos em segundo plano...    //... 2 metodo para criar um contexto temporario, para realizar uma unica tarefa
     }
-        
-    let backgroundContext:NSManagedObjectContext!
+     
+    // propriedade para o contexto em 2 plano. Vamos desencapsular implicitamente
+    var backgroundContext:NSManagedObjectContext!
     
     //inicializador que o configure
     init(modelName:String) {
@@ -27,12 +28,17 @@ class DataController {
         backgroundContext = persistentContainer.newBackgroundContext()
     }
     
+    //instanciar para trabalhar os dois contextos
     func configureContexts() {
-        viewContext.automaticallyMergesChangesFromParent = true
-        backgroundContext.automaticallyMergesChangesFromParent = true
+        backgroundContext = persistentContainer.newBackgroundContext()// criar o contexto associado com uma fila privada
         
-        backgroundContext.mergePolicy = NSMergePolicy.mergeByPropertyObjectTrump
-        viewContext.mergePolicy = NSMergePolicy.mergeByPropertyStoreTrump
+        //fusão de mudanças automaticamente
+        viewContext.automaticallyMergesChangesFromParent = true //frontal
+        backgroundContext.automaticallyMergesChangesFromParent = true //2 plano
+        
+        //politicas para o app não travar
+        backgroundContext.mergePolicy = NSMergePolicy.mergeByPropertyObjectTrump //2 plano
+        viewContext.mergePolicy = NSMergePolicy.mergeByPropertyStoreTrump //se houver conflito preferira os valores de propriedade
     }
     
     //carregar o repositorio persistente.
@@ -42,6 +48,7 @@ class DataController {
                 fatalError(error!.localizedDescription) //pare a execução e registre o problema
             }
             self.autoSaveViewContext()
+            self.configureContexts()
             completion?()
         }
     }
