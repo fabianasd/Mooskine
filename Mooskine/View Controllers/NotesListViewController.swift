@@ -59,18 +59,23 @@ class NotesListViewController: UIViewController, UITableViewDataSource {
         
         navigationItem.title = notebook.name
         navigationItem.rightBarButtonItem = editButtonItem
-        //  setupFetchedResultsController()
+        setupFetchedResultsController()
         
         updateEditButtonState()
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        
+        setupFetchedResultsController()
         if let indexPath = tableView.indexPathForSelectedRow {
             tableView.deselectRow(at: indexPath, animated: false)
             tableView.reloadRows(at: [indexPath], with: .fade)
         }
+    }
+    
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        fetchedResultsController = nil
     }
     
     // -------------------------------------------------------------------------
@@ -85,7 +90,6 @@ class NotesListViewController: UIViewController, UITableViewDataSource {
     
     // Adds a new `Note` to the end of the `notebook`'s `notes` array
     func addNote() {
-        
         let note = Note(context: dataController.viewContext) //criaremos uma anotacao registrada a um contexto
         note.attributedText = NSAttributedString(string:"New note") //configuramos o texto como um "New note"
         note.creationDate = Date() // data de criacao
@@ -182,6 +186,22 @@ class NotesListViewController: UIViewController, UITableViewDataSource {
 }
 
 extension NotesListViewController:NSFetchedResultsControllerDelegate {
+    
+    func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange anObject: Any, at indexPath: IndexPath?, for type: NSFetchedResultsChangeType, newIndexPath: IndexPath?) {
+        switch type {
+        case .insert:
+            tableView.insertRows(at: [newIndexPath!], with: .fade)
+            break
+        case .delete:
+            tableView.deleteRows(at: [indexPath!], with: .fade)
+            break
+        case .update:
+            tableView.reloadRows(at: [indexPath!], with: .fade)
+        case .move:
+            tableView.moveRow(at: indexPath!, to: newIndexPath!)
+        }
+    }
+    
     //inicio e...
     func controllerWillChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
         tableView.beginUpdates()

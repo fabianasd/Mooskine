@@ -14,11 +14,25 @@ class DataController {
     let persistentContainer:NSPersistentContainer
     
     var viewContext:NSManagedObjectContext { //propriedade de convenienca para acessar o contexto.
-        return persistentContainer.viewContext
+        return persistentContainer.viewContext //O container (DataController: cria uma fila principal chamada viewContext. Ele tambem fornece duas formas de  criar contextos em segundo plano...    //... 2 metodo para criar um contexto temporario, para realizar uma unica tarefa
     }
+        
+    let backgroundContext:NSManagedObjectContext!
+    
     //inicializador que o configure
     init(modelName:String) {
         persistentContainer =  NSPersistentContainer(name: modelName)//instanciar o recipiente persistente = e passar o nome do modelo para o seu inicializador
+
+        //... 1: é um método padrao newBackgroundContext. Que cria um novo contexto em segundo plano.
+        backgroundContext = persistentContainer.newBackgroundContext()
+    }
+    
+    func configureContexts() {
+        viewContext.automaticallyMergesChangesFromParent = true
+        backgroundContext.automaticallyMergesChangesFromParent = true
+        
+        backgroundContext.mergePolicy = NSMergePolicy.mergeByPropertyObjectTrump
+        viewContext.mergePolicy = NSMergePolicy.mergeByPropertyStoreTrump
     }
     
     //carregar o repositorio persistente.

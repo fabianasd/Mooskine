@@ -153,8 +153,9 @@
 			children = (
 				0C705816266429C1003FD8FE /* Managed Object Extensions */,
 				0C809E4E265550F100E75ABE /* Mooskine.xcdatamodeld */,
-				0CDDE03A266D4C18009EBE23 /* UpdateToAttributedStrings.xcmappingmodel */,
 				0C6E8F41265ADEF20034931C /* DataController.swift */,
+				0CDDE03A266D4C18009EBE23 /* UpdateToAttributedStrings.xcmappingmodel */,
+				0CDDE03E266D4CE3009EBE23 /* UpdateToAttributedStringsPolicy.swift */,
 				0CDDE040266D5420009EBE23 /* Pathifier.swift */,
 			);
 			path = Model;
@@ -201,7 +202,6 @@
 			children = (
 				0C70581726642A10003FD8FE /* Notebook+Extensions.swift */,
 				0C70581926642AD6003FD8FE /* Note+Extensions.swift */,
-				0CDDE03E266D4CE3009EBE23 /* UpdateToAttributedStringsPolicy.swift */,
 			);
 			path = "Managed Object Extensions";
 			sourceTree = "<group>";
