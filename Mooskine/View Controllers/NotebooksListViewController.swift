@@ -201,10 +201,8 @@ extension NotebooksListViewController:NSFetchedResultsControllerDelegate {
         switch type {
         case .insert:
             tableView.insertSections(indexSet, with: .fade)
-            break
         case .delete:
             tableView.deleteSections(indexSet, with: .fade)
-            break
         case .update, .move:
             fatalError("Invalid change type in controller(_:didChange:atSectionIndex:for:). Only .insert ou .delete should be possible.")
         }

@@ -149,32 +149,28 @@ extension NoteDetailsViewController {
     }
     
     @IBAction func cowTapped(sender: Any) {
-        //  let backgroundContext:NSManagedObjectContext! = dataController?.backgroundContext
+        //referencia ao contexto de fundo duradouro
+        let backgroundContext:NSManagedObjectContext! = dataController?.backgroundContext
         
         let newText = textView.attributedText.mutableCopy() as! NSMutableAttributedString
         
         let selectedRange = textView.selectedRange
         let selectedText = textView.attributedText.attributedSubstring(from: selectedRange)
+        //garantir que aconteça na fila certa
+        let noteID = note.objectID
         
-        //        let noteID = note.objectID
-        //
-        //        dataController?.backgroundContext.perform {
-        //            let backgroundNote = backgroundContext.object(with: noteID) as! Note
-        //
-        let cowText = Pathifier.makeMutableAttributedString(for: selectedText, withFont: UIFont(name: "AvenirNext-Heavy", size: 56)!, withPatternImage: #imageLiteral(resourceName: "texture-cow"))
-        
-        newText.replaceCharacters(in: selectedRange, with: cowText)
-        
-        sleep(5) //
-        
-        textView.attributedText = newText
-        textView.selectedRange = NSMakeRange(selectedRange.location, 1)
-        note.attributedText = textView.attributedText
-        try? dataController?.viewContext.save()
-        
-        //            backgroundNote.attributedText = newText
-        //            try? backgroundContext.save()
-        //        }
+        dataController?.backgroundContext.perform {
+            let backgroundNote = backgroundContext.object(with: noteID) as! Note
+            
+            let cowText = Pathifier.makeMutableAttributedString(for: selectedText, withFont: UIFont(name: "AvenirNext-Heavy", size: 56)!, withPatternImage: #imageLiteral(resourceName: "texture-cow"))
+            
+            sleep(5)
+            
+            newText.replaceCharacters(in: selectedRange, with: cowText)
+            
+            backgroundNote.attributedText = newText
+            try? backgroundContext.save()
+        }
     }
     
     // MARK: Helper methods for actions
@@ -201,8 +197,8 @@ extension NoteDetailsViewController {
     }
     
     func removeSaveNotificationObserver() {
-        if let token = saveObserverToken {
-            NotificationCenter.default.removeObserver(token)
+        if let token = saveObserverToken {//verifica se tem valor
+            NotificationCenter.default.removeObserver(token) // se tem remove-o da central de notificações
         }
     }
     
@@ -210,6 +206,7 @@ extension NoteDetailsViewController {
         textView.attributedText = note.attributedText
     }
     
+    //administrar as notificações que chegarem
     func handleSaveNotification(notification:Notification) {
         DispatchQueue.main.async {
             self.reloadText()

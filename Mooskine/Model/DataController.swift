@@ -18,7 +18,7 @@ class DataController {
     }
      
     // propriedade para o contexto em 2 plano. Vamos desencapsular implicitamente
-    var backgroundContext:NSManagedObjectContext!
+    let backgroundContext:NSManagedObjectContext!
     
     //inicializador que o configure
     init(modelName:String) {
@@ -30,7 +30,7 @@ class DataController {
     
     //instanciar para trabalhar os dois contextos
     func configureContexts() {
-        backgroundContext = persistentContainer.newBackgroundContext()// criar o contexto associado com uma fila privada
+       // backgroundContext = persistentContainer.newBackgroundContext()// criar o contexto associado com uma fila privada
         
         //fusão de mudanças automaticamente
         viewContext.automaticallyMergesChangesFromParent = true //frontal
@@ -57,7 +57,8 @@ class DataController {
 extension DataController {
     //salva e chama recursivamente com frequencia
     func autoSaveViewContext(interval:TimeInterval = 30) {
-        print("aquiiii no autoSaveViewContext ")
+        print("autosaving ")
+        
         guard interval > 0 else {
             print("cannot set negative autosave internal")
             return
